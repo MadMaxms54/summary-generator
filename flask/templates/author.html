@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Research Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #E6E6FA; /* Lavender background */
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            position: relative; /* Added for loading overlay */
+            overflow: hidden; /* Prevent scroll during loading */
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent background */
+            padding: 40px; /* Increased padding for larger panel */
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 800px; /* Increased max-width for the panel */
+            width: 100%;
+            backdrop-filter: blur(10px); /* Blurring the background */
+        }
+        h1 {
+            color: #8A2BE2; /* Blue Violet */
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Georgia', serif; /* Changing the font for the title */
+        }
+        .description p {
+            font-size: 16px;
+            color: #555;
+            margin: 10px 0;
+        }
+        .search-container {
+            display: flex;
+            justify-content: space-between; /* Space between input and button */
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: nowrap; /* Prevent wrapping */
+        }
+        input[type="text"] {
+            flex: 1; /* Allow input to take up available space */
+            padding: 12px;
+            font-size: 16px;
+            margin-right: 10px; /* Space between input and button */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"]:focus {
+            border-color: #FFD700; /* Gold on focus */
+            outline: none;
+        }
+        .buttons-container {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: center;
+            margin: 5px 0;
+        }
+        input[type="button"], input[type="submit"] {
+            padding: 12px 24px;
+            background-color: #FFD700; /* Gold */
+            color: black; /* Change text color for contrast */
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px; /* Space between buttons */
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            white-space: nowrap; /* Ensure text doesn't wrap */
+        }
+        input[type="button"]:hover, input[type="submit"]:hover {
+            background-color: #DAA520; /* Goldenrod */
+        }
+        .spinner {
+            border: 8px solid rgba(243, 243, 243, 0.8); /* Light gray with transparency */
+            border-top: 8px solid #FFD700; /* Gold */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto; /* Center the spinner */
+            display: none; /* Hide the spinner by default */
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8); /* Light overlay */
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 999; /* On top of everything */
+            opacity: 0; /* Start with opacity 0 for fade-in effect */
+            transition: opacity 0.5s ease; /* Smooth transition for fade-in */
+        }
+        .loading-overlay.show {
+            display: flex; /* Show when class is added */
+            opacity: 1; /* Fade in */
+        }
+        .loading-text {
+            margin-top: 10px; /* Space above the text */
+            font-size: 18px; /* Font size for the loading text */
+            color: #555; /* Color of the loading text */
+        }
+        .abstract-container {
+            margin-top: 20px;
+            text-align: left; /* Align text to the left for abstracts */
+            padding: 20px; /* Add padding around the abstract section */
+            background-color: #f9f9f9; /* Light gray background for abstracts */
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Slight shadow for depth */
+        }
+        .abstract-container h2 {
+            color: #8A2BE2; /* Blue Violet for section title */
+            font-size: 24px; /* Section title size */
+            margin-bottom: 10px;
+        }
+        .abstract {
+            margin-bottom: 20px; /* Space between abstracts */
+            padding: 15px; /* Padding inside each abstract */
+            border-left: 4px solid #8A2BE2; /* Left border for emphasis */
+            background-color: #ffffff; /* White background for individual abstracts */
+            border-radius: 5px; /* Rounded corners for individual abstracts */
+        }
+        .abstract h3 {
+            color: #8A2BE2; /* Blue Violet for abstract titles */
+            font-size: 18px; /* Title size */
+            margin: 5px 0;
+        }
+        .abstract p {
+            font-size: 14px; /* Smaller font size for abstracts */
+            color: #333; /* Darker color for readability */
+            margin: 5px 0;
+            line-height: 1.5; /* Increase line height for better readability */
+        }
+        .abstract img {
+            width: 100%; /* Full width for images */
+            height: auto; /* Maintain aspect ratio */
+            border-radius: 5px; /* Rounded corners for images */
+            margin-top: 10px; /* Space above images */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 600px) {
+            .search-container {
+                flex-direction: column; /* Stack elements on smaller screens */
+                align-items: stretch; /* Stretch items */
+            }
+            input[type="button"], input[type="submit"], input[type="text"] {
+                width: 100%;
+                max-width: none;
+                margin-right: 0; /* Remove margin */
+            }
+            input[type="button"], input[type="submit"] {
+                margin-top: 10px; /* Space between stacked buttons */
+            }
+        }
+        .mm {
+            font-family: "Gill Sans Extrabold", sans-serif;
+            font-weight: bolder;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Please wait...</div> <!-- Added loading text -->
+</div>
+
+<div class="container"><br>
+    
+    <span class="mm">
+    <h1><i class="fas fa-search"></i> Search Faculty Research</h1>
+</span>
+    <div class="description">
+        <p>This website is a one-place destination to find the research papers of particular faculty members.</p>
+    </div>
+    <form id="searchForm" action="/search" method="post">
+        <div class="search-container">
+            <input type="text" id="facultyName" name="name" placeholder="Search Faculty Name">
+            <div class="buttons-container">
+                <input type="submit" value="Search">
+                <input type="button" value="Import" onclick="document.getElementById('upload').click();">
+            </div>
+        </div>
+        <div id="loading-indicator">
+            <div class="spinner"></div>
+        </div>
+    </form>
+    <input type="file" id="upload" style="display:none;">
+    <div class="description">
+        <p>The search box will search the faculty name.</p>
+        <p>The import button will load the files.</p>
+    </div>
+
+    <!-- New Abstract Section -->
+    <div class="abstract-container">
+        <h2>Software Features</h2>
+        <div class="abstract">
+            <h3>Automated Publication Summaries</h3>
+            <p>
+                The software automatically generates comprehensive summaries of research publications for faculty members, streamlining the profile-building process. It gathers key details from multiple sources, ensuring that users present an accurate and professional overview of their academic contributions.
+            </p>
+             </div>
+        <div class="abstract">
+            <h3>Data Import Functionality</h3>
+            <p>
+                Users can easily import faculty names from Excel files, significantly reducing manual entry. This feature promotes efficiency and accuracy, allowing faculty to focus on their research rather than administrative tasks.
+            </p>
+                   </div>
+        <div class="abstract">
+            <h3>Enhanced Visibility and Collaboration</h3>
+            <p>
+                By compiling publication histories and summaries, the software enhances the visibility of faculty members within academic communities. This increased exposure fosters collaboration opportunities and connects researchers with like-minded peers and potential collaborators.
+            </p>
+            <img src="https://via.placeholder.com/600x200.png?text=Enhanced+Visibility+and+Collaboration" alt="Enhanced Visibility and Collaboration">
+        </div>
+    </div>
+</div>
+
+<script>
+    let facultyDataArray = [];  // Array to store faculty names
+
+    document.getElementById('upload').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // Get the first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+
+            // Convert sheet to JSON with header (assuming Name is in the first column)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            // Extract only the names (assume first row is headers)
+            const names = jsonData.slice(1).map(row => row[0]); // Skipping header row
+
+            // Populate the input field with the names
+            document.getElementById('facultyName').value = names.join(', ');
+            facultyDataArray = names; // Store names in the array
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+
+    // Show loading overlay and spinner on form submission
+    document.getElementById('searchForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.classList.add('show'); // Add class to show overlay
+
+        // Simulate loading delay (optional)
+        setTimeout(() => {
+            this.submit(); // Submit the form after showing the loading overlay
+        }, 500); // Adjust time as needed
+    });
+</script>
+
+</body>
+</html>

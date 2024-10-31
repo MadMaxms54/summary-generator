@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author Information</title>
+    <style>
+        body {
+            background-color: #F3E5F5; /* Lavender Blush */
+            color: #4B0082; /* Dark Indigo for text */
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .panel {
+            background-color: #ffffff; /* White background for the panel */
+            border: 1px solid #E0E0E0; /* Light gray border */
+            border-radius: 5px; /* Rounded corners */
+            padding: 20px; /* Padding inside the panel */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            margin-bottom: 20px; /* Space below each author panel */
+        }
+        h1 {
+            color: #4B0082; /* Dark Indigo for the main title */
+            font-size: 24px; /* Font size for the title */
+            margin-bottom: 10px; /* Space below the title */
+        }
+        h2 {
+            color: #2E0F4B; /* Darker color for the Top Publications heading */
+            font-size: 20px; /* Font size for subheadings */
+            margin-top: 20px; /* Space above the subheading */
+            margin-bottom: 10px; /* Space below the subheading */
+        }
+        p {
+            color: #4B0082; /* Dark Indigo for paragraphs */
+            font-size: 16px; /* Font size for paragraphs */
+            line-height: 1.5; /* Line height for readability */
+            margin-bottom: 10px; /* Space below paragraphs */
+        }
+        .affiliation {
+            border-bottom: 2px solid #E0E0E0; /* Light gray line below affiliation */
+            padding-bottom: 10px; /* Padding below affiliation for spacing */
+        }
+        .publication-box {
+            margin-bottom: 15px; /* Space below publication boxes */
+            padding: 15px; /* Padding inside publication boxes */
+            border: 1px solid #E0E0E0; /* Light gray border */
+            border-radius: 10px; /* Increased border radius for rounded corners */
+            background-color: #f9f9f9; /* Light background for each publication box */
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for publication boxes */
+        }
+        .publication-title {
+            font-weight: bold; /* Bold title */
+            font-size: 18px; /* Larger font size for titles */
+            color: #8A2BE2; /* Blue Violet color for titles */
+            margin: 0 0 5px 0; /* Space below title */
+            text-decoration: underline; /* Underline title */
+        }
+        .publication-year,
+        .publication-citations {
+            font-size: 14px; /* Smaller font size for year and citations */
+            color: #4B0082; /* Dark Indigo color */
+            margin: 5px 0; /* Space above and below */
+        }
+        button {
+            background-color: #FFD700; /* Gold */
+            color: #4B0082; /* Dark Indigo */
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            display: inline-block; /* Align buttons inline */
+        }
+        button:hover {
+            background-color: #DAA520; /* Golden on hover */
+            color: white; /* Change text color on hover */
+        }
+        .error-message {
+            color: red; /* Red for error messages */
+            font-weight: bold; /* Bold for emphasis */
+        }
+    </style>
+</head>
+<body>
+    {% for author in authorinfos %}
+    <div class="panel">
+        <h1>Name: {{ author.name }}</h1>
+        <p class="affiliation"><strong>Affiliation:</strong> {{ author.affiliation }}</p>
+        <p><strong>Total Citations:</strong> {{ author.total_citations }}</p>
+        <p><strong>H-Index:</strong> {{ author.h_index }}</p>
+        <p><strong>I10-Index:</strong> {{ author.i10_index }}</p>
+        <p><strong>Email:</strong> {{ author.email }}</p>
+        
+        <h2>Top Publications</h2>
+        <ul>
+            {% for pub in author.top_publications %}
+                <li class="publication-box">
+                    <p class="publication-title">{{ pub.title }}</p>
+                    <p class="publication-year"><strong>Year:</strong> {{ pub.year }}</p>
+                    <p class="publication-citations"><strong>Citations:</strong> {{ pub.citations }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+    
+    <div>
+        <button id="pdf">Download PDF</button>
+        <button id="excel">Download Excel</button>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="error-message">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        document.getElementById('pdf').addEventListener('click', () => {
+            const authorsData = [
+                {% for author in authorinfos %}
+                {
+                    name: "{{ author.name|e }}",
+                    affiliation: "{{ author.affiliation|e }}",
+                    publications: [
+                        {% for pub in author.top_publications %}
+                        {
+                            title: "{{ pub.title|e }}",
+                            year: "{{ pub.year|e }}",
+                            citations: "{{ pub.citations|e }}"
+                        }{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+
+            fetch('/downloadpdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(authorsData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'output.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error downloading the PDF:', error);
+                alert('There was an error downloading the PDF. Please try again later.');
+            });
+        });
+    </script>
+</body>
+</html>
